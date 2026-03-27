@@ -1,0 +1,61 @@
+# Backend deployment + service
+# Replace `YOUR_REGISTRY/shopswift-backend:latest` with your image
+# Set secrets via Kubernetes Secret (JWT_SECRET, MONGO_URI, etc.)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: shopswift-backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: shopswift-backend
+  template:
+    metadata:
+      labels:
+        app: shopswift-backend
+    spec:
+      containers:
+        - name: api
+          image: YOUR_REGISTRY/shopswift-backend:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 4000
+          env:
+            # Example: wire from a secret
+            # - name: JWT_SECRET
+            #   valueFrom:
+            #     secretKeyRef:
+            #       name: shopswift-secrets
+            #       key: jwt_secret
+            - name: PORT
+              value: "4000"
+            - name: MONGO_URI
+              value: "mongodb://mongo:27017/shopswift"
+            - name: CORS_ORIGIN
+              value: "https://your-frontend-domain"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 4000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 4000
+            initialDelaySeconds: 15
+            periodSeconds: 20
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: shopswift-backend
+spec:
+  selector:
+    app: shopswift-backend
+  ports:
+    - name: http
+      port: 4000
+      targetPort: 4000
+  type: ClusterIP
