@@ -1,8 +1,8 @@
 import type { Request, Response, NextFunction } from 'express'
-import { v4 as uuid } from 'uuid'
+import { randomUUID } from 'node:crypto'
 
 export const requestId = (req: Request, res: Response, next: NextFunction) => {
-  const id = req.headers['x-request-id']?.toString() ?? uuid()
+  const id = req.headers['x-request-id']?.toString() ?? randomUUID()
   res.setHeader('x-request-id', id)
   ;(req as Request & { id: string }).id = id
   next()
